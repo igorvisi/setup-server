@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  alertmanager:
+    image: prom/alertmanager:v0.21.0
+    container_name: ${DOMAINE_NAME}_alertmanager
+    volumes:
+      - ./etc:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    expose:
+      - 9093
+      
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK}"
+      - "traefik.http.routers.${DOMAINE_NAME}_alermanager.entrypoints=web"
+      - "traefik.http.routers.${DOMAINE_NAME}_alermanager.rule=Host(`${DOMAINE_NAME}`)"
+      - "traefik.http.routers.${DOMAINE_NAME}_alermanager.rule=Host(`${DOMAINE_NAME}`) || Host(`www.${DOMAINE_NAME}`)"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_alermanager-redirectregex.redirectregex.regex=^https://www.${DOMAINE_NAME}/(.*)"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_alermanager-auth.basicauth.usersfile=/password"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_alermanager-redirectregex.redirectregex.replacement=https://${DOMAINE_NAME}/$${1}"
+      - "traefik.http.routers.${DOMAINE_NAME}.middlewares=${DOMAINE_NAME}_alermanager-redirectregex,${DOMAINE_NAME}_alertmanager-auth"
+
+
+networks:
+  default:
+    external:
+      name: ${DEFAULT_NETWORK}

@@ -1,0 +1,36 @@
+version: '2.1'
+
+services:
+
+  nodeexporter:
+    image: prom/node-exporter:v1.0.1
+    container_name: ${DOMAINE_NAME}_nodeexporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+      
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK}"
+      - "traefik.http.routers.${DOMAINE_NAME}_nodeexporter.entrypoints=web"
+      - "traefik.http.routers.${DOMAINE_NAME}_nodeexporter.rule=Host(`${DOMAINE_NAME}`)"
+      - "traefik.http.routers.${DOMAINE_NAME}_nodeexporter.rule=Host(`${DOMAINE_NAME}`) || Host(`www.${DOMAINE_NAME}`)"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_nodeexporter-redirectregex.redirectregex.regex=^https://www.${DOMAINE_NAME}/(.*)"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_nodeexporter-auth.basicauth.usersfile=/password"
+      - "traefik.http.middlewares.${DOMAINE_NAME}_nodeexporter-redirectregex.redirectregex.replacement=https://${DOMAINE_NAME}/$${1}"
+      - "traefik.http.routers.${DOMAINE_NAME}.middlewares=${DOMAINE_NAME}_nodeexporter-redirectregex,${DOMAINE_NAME}_nodeexporter-auth"
+
+
+networks:
+  default:
+    external:
+      name: ${DEFAULT_NETWORK}
