@@ -39,4 +39,8 @@ Each directory contains:
 1. Install docker in Linux
 2. Create user docker. It's not recommended to run docker with a root user.
 3. Create a directory inside /etc where our docker-compose will be put. /etc/dkc/
-4. 
+4.
+
+
+## Plan with Kubernetes before Kubernetes
+![Plan for Docker](plan-docker.jpg)
