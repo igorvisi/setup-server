@@ -53,6 +53,11 @@ ExecStop=/usr/docker-compose stop
 WantedBy=multi-user.target
 ```
 
+```bash
+# Reload systemd daemon
+sudo systemctl daemon-reload
+```
+
 After that, every directory inside /opt/dk/, become a service and can be run by systemctl start dk@directory_name.service .
 
 ## Run container app
