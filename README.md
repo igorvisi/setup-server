@@ -5,8 +5,8 @@ Example:
 * Dashboard ( Grafana + Loki + Prometheus + Alert manager ). (
 [github.com/avenirbiz/docker_dashboard/](https://github.com/avenirbiz/docker_dashboard/) ).
 
-* Collect metrics & logs ( cadvisor + promtail + nodeexporter ). ( [github.com/avenirbiz/docker_metrics_logs](https://github.com/avenirbiz/docker_metrics_logs/)
-)
+* Odoo ( Odoo + Postgres + Adminer + futurice/volume-backup)
+[github.com/avenirbiz/docker_odoo](https://github.com/avenirbiz/docker_odoo)
 
 ## Description of directory
 
@@ -16,12 +16,40 @@ Each projet can contain:
 * **.env** contains variables and creditentials which must be set per projet like domaine name, database password,...
 * **docker-compose.yml** contains configuration of running containers and traefik label for dynamic configuration
 * **/etc/** contains configuration which must be insert inside running containers like odoo.conf ...
-* **generate.py** Script to generate file like odoo.conf. In some case, some configuration must be generated from ( .env or psono ) like odoo.conf,... Because, in case of Odoo, if database container run with database password from .env, the odoo.conf must have the same database password.
+* **generate.py** Script to generate file like odoo.conf because in some case, configuration must be generated from ( .env or psono ) like odoo.conf,... like in Odoo, if database container run with database password from .env, the odoo.conf must have the same database password.
 
 ## Custom way to setup dev env
-Nota: For develop, you are not obliged to put projet in /opt/dk/ and create a dk user. You can put projet in your home like /home/ivisi/Work/. But you must configure the same process of installation and replace every /opt/dk with your directory instead /home/visi/Work. But it often a good idea to have the dev env which is getting closer to the prod env
+Nota: For develop, you are not obliged to put projet in /opt/dk/ and create a dk user. You can put projet in your home like /home/ivisi/Work/. But you must configure the same process of installation and adapt installation with your directory /home/ivisi/Work/. But it often a good idea to have the dev env which is getting closer to the prod env
 
 ## Configure the Docker environnement
+Running Docker in production requires many security. The first and more important is to run only trusted image. Docker registry doesn't verify if a image contains malicious code or not.
+1. Update server
+
+```bash
+sudo apt update && sudo apt upgrade
+```
+
+2. Install unattended-upgrades for automatically install security update
+we can configure alert with alertmanager in github.com/avenirbiz/docker_dashboard.
+
+```bash
+sudo apt install unattended-upgrades
+# Uncomment security update only
+sudo vim /etc/apt/apt.conf.d/50unattended-upgrades
+# "${distro_id}:${disto_codename}-security";
+```
+3. Install tools for audit & malware scanner
+```bash
+sudo apt install lynis rkhunter chkrootkit
+sudo lynis audit system
+sudo rkhunter --check
+sudo chkrootkit
+
+# To make cron with this tools
+sudo dkpg-reconfigure rkhunter
+sudo dkpg-reconfigure chkrootkit
+# Result of log can be see in our dashboard
+```
 
 1. Install docker in Linux. [Installation](https://docs.docker.com/engine/install/ubuntu/)
 2. Create user docker. It's not recommended to run docker with a root user. If a process in Container run as root, so the process can access in the host as root. Before running a image in a production, we must verify in the Dockerfile, they use an none root user. You can use tool like hadolint to check Dockerfile
@@ -48,6 +76,8 @@ RemainAfterExit=true
 WorkingDirectory=/opt/dk/%i
 ExectStart=/usr/docker-compose up -d
 ExecStop=/usr/docker-compose stop
+User=dk
+Group=docker
 
 [Install]
 WantedBy=multi-user.target
