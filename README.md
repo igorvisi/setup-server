@@ -46,16 +46,17 @@ sudo rkhunter --check
 sudo chkrootkit
 
 # To make cron with this tools
-sudo dkpg-reconfigure rkhunter
-sudo dkpg-reconfigure chkrootkit
+sudo dpkg-reconfigure rkhunter
+sudo dpkg-reconfigure chkrootkit
+sudo dpkg-reconfigure lynis
 # Result of log can be see in our dashboard
 ```
 
-1. Install docker in Linux. [Installation](https://docs.docker.com/engine/install/ubuntu/)
+1. Install docker and docker-compose in Linux. [Installation](https://docs.docker.com/engine/install/ubuntu/)
 2. Create user docker. It's not recommended to run docker with a root user. If a process in Container run as root, so the process can access in the host as root. Before running a image in a production, we must verify in the Dockerfile, they use an none root user. You can use tool like hadolint to check Dockerfile
 
 ```bash
-sudo useradd -r -m -d /opt/dk dk
+sudo useradd -r -m --shell /bin/bash -d /opt/dk dk
 sudo usermod -aG docker dk # Add the user in docker group
 ```
 
@@ -117,7 +118,7 @@ mkcert -key-file key.pem -cert-file cert.pem '*.localhost' '*.test' localhost 12
 
 ```bash
 # clone this repo from github and copy traefik directory to /opt/dk/
-sudo git clone https://github.com/avenirbiz/traefik /opt/dk/traefik
+sudo -u dk git clone https://github.com/avenirbiz/docker_traefik /opt/dk/traefik
 ```
 
 #### [FOR DEVELOP MODE] copy the generated key to /opt/dk/traefik/etc
@@ -132,6 +133,8 @@ sudo cp key.pem cert.pem /opt/dk/traefik/etc/
       - "./etc/traefik-dev.yml:/traefik.yml:ro" # Only for dev test
 
 ```
+#### Configure traefik
+See in [github.com/avenirbiz/docker_traefik](https://github.com/avenirbiz/docker_traefik)
 
 #### Start traefik container
 ```bash
@@ -141,18 +144,18 @@ sudo systemctl start dk@traefik.service
 Many docker-compose are configured to puts backups in /mnt/backups/. In developing, you can create the repo. In production, It can be a mounted NFS from storage backups.
 #### Run docker apps
 
-Example, we want to run absoins__lerocher.
+Example, we want to run absoins_lerocher.
 
 ```bash
 # Get the repo contains psono docker-compose
-sudo -u dk git clone https://github.com/avenirbiz/absoins__lerocher /opt/dk/absoins__lerocher
-# With odoo Docker, in this case, the name path of module become absoins__lerocher. This can create confusion with the path using when the module is developed, example for Odoo web.
+sudo -u dk git clone https://github.com/avenirbiz/absoins__lerocher /opt/dk/absoins_lerocher
+# With odoo Docker, in this case, the name path of module become absoins_lerocher. This can create confusion with the path using when the module is developed, example for Odoo web.
 
-# See in absoins__lerocher/README.md how to configure absoins__lerocher with traefik.
+# See in absoins_lerocher/README.md how to configure absoins_lerocher with traefik.
 
-# After you can start absoins__lerocher
+# After you can start absoins_lerocher
 # You must be sure that traefik service run before
-sudo systemclt start absoins__lerocher
+sudo systemclt start absoins_lerocher
 
 # You can open in browser the domaine name you have configure in your .env file
 
@@ -166,6 +169,17 @@ sudo docker logs -f container_name
 NB:
 The name of container is not the name of systemd service. It's possible to stop or restart a service with docker commands. The systemd service run a docker-compose file in /opt/dk/**
 
+
+### How to migrate from odoo to odoo container
+
+```bash
+# This example for avenirbiz from odoo13 enterprise to odoo14 community
+tar zxvf bzovhapp02_enterprise_source-2021-02-05_1626.tgz
+sudo -u dk git clone https://github.com/avenirbiz/avenirbiz_odoo /opt/dk/avenirbiz
+
+sudo -u dk cp -r enterprise /opt/dk/avenirbiz/
+
+```
 
 
 ## Plan with Docker before Kubernetes
