@@ -1,56 +1,68 @@
 # Architecture with Docker before Kubernetes
-This repo contains all tools docker-compose files used by Avenir Business. Each docker-compose is only one application stack. But for some purpose, two or three docker-compose file can be merged in production.
+This repo is documentation for how Avenir Business manages apps with Docker. We have :
 
-Example:
 * Dashboard ( Grafana + Loki + Prometheus + Alert manager ). (
 [github.com/avenirbiz/docker_dashboard/](https://github.com/avenirbiz/docker_dashboard/) ).
 
-* Odoo ( Odoo + Postgres + Adminer + futurice/volume-backup)
+* Odoo sample ( Odoo + Postgres + Adminer + futurice/volume-backup)
 [github.com/avenirbiz/docker_odoo](https://github.com/avenirbiz/docker_odoo)
 
-## Description of directory
+* Traefik as edge router [github.com/avenirbiz/docker_traefik](https://github.com/avenirbiz/docker_traefik)
 
-Each projet can contain:
+* Absoins [github.com/avenirbiz/absoins](https://github.com/avenirbiz/absoins)
+
+* Abhotel [github.com/avenirbiz/abhotel](https://github.com/avenirbiz/abhotel)
+
+* ...
+## Descriptions
+
+Each project can contain:
 * **sample.env** contains example of variables must be in .env file. As is not good to put credentials in Github* Alertmanager to send alert based on metrics trigger.
 , variables in .env must come from password manager.
-* **.env** contains variables and creditentials which must be set per projet like domaine name, database password,...
+* **.env** contains variables and creditentials which must be set per project like domaine name, database password,...
+* **Dockerfile** some project needs to be build to create docker image.
 * **docker-compose.yml** contains configuration of running containers and traefik label for dynamic configuration
 * **/etc/** contains configuration which must be insert inside running containers like odoo.conf ...
-* **generate.py** Script to generate file like odoo.conf because in some case, configuration must be generated from ( .env or psono ) like odoo.conf,... like in Odoo, if database container run with database password from .env, the odoo.conf must have the same database password.
+* **generate.py** Script to generate file like odoo.conf because in some case, configuration must be generated from ( .env or psono ) like odoo.conf,... like in Odoo, if database container run with database password from .env in docker-compose, the odoo.conf must have the same database password.
+* **source code** we can have a custom Odoo module or another project source code. Every thing depends on Dockerfile or/and docker-compose.yml
 
-## Custom way to setup dev env
-Nota: For develop, you are not obliged to put projet in /opt/dk/ and create a dk user. You can put projet in your home like /home/ivisi/Work/. But you must configure the same process of installation and adapt installation with your directory /home/ivisi/Work/. But it often a good idea to have the dev env which is getting closer to the prod env
+You can see more description in each repo in README.md .
 
-## Configure the Docker environnement
-Running Docker in production requires many security. The first and more important is to run only trusted image. Docker registry doesn't verify if a image contains malicious code or not.
-1. Update server
+We use 3 setup : Dev mode, Test mode and Prod mod. But the test mode and prod mode are configured the same way
+
+## Prod and Test mode
+Can be setup in a local server or in a Cloud VPS...
+
+* Install and Update OS. Choose a last LTS version of Ubuntu server
 
 ```bash
 sudo apt update && sudo apt upgrade
 ```
 
-2. Install unattended-upgrades for automatically install security update
-we can configure alert with alertmanager in github.com/avenirbiz/docker_dashboard.
+* Install unattended-upgrades for automatically install security update
+we can configure alert with alertmanager in github.com/avenirbiz/docker_dashboard
 
 ```bash
 sudo apt install unattended-upgrades
 # Uncomment security update only
 sudo vim /etc/apt/apt.conf.d/50unattended-upgrades
-# "${distro_id}:${disto_codename}-security";
+"${distro_id}:${disto_codename}-security";
 ```
-3. Install tools for audit & malware scanner
+
+* Install security and tools
+
 ```bash
-sudo apt install lynis rkhunter chkrootkit
+sudo apt install lynis rkhunter chkrootkit wireguard ufw fail2ban ssh-server
+
+# We can create cron for those commands
 sudo lynis audit system
 sudo rkhunter --check
 sudo chkrootkit
-
-# To make cron with this tools
-sudo dpkg-reconfigure rkhunter
-sudo dpkg-reconfigure chkrootkit
-sudo dpkg-reconfigure lynis
-# Result of log can be see in our dashboard
+# Logs can be view if the dashboard is configured github.com/avenirbiz/docker_dashboard and alert too
 ```
+
+## Configure the Docker environnement
+Running Docker in production requires many security. The first and more important is to run only trusted image. Docker registry doesn't verify if a image contains malicious code or not.
 
 1. Install docker and docker-compose in Linux. [Installation](https://docs.docker.com/engine/install/ubuntu/)
 2. Create user docker. It's not recommended to run docker with a root user. If a process in Container run as root, so the process can access in the host as root. Before running a image in a production, we must verify in the Dockerfile, they use an none root user. You can use tool like hadolint to check Dockerfile
@@ -60,10 +72,10 @@ sudo useradd -r -m --shell /bin/bash -d /opt/dk dk
 sudo usermod -aG docker dk # Add the user in docker group
 ```
 
-Inside /opt/dk, we will put all projet. Every projet in will be a git projet from Github.
+Inside /opt/dk, we will put all project. Every project in will be a git project from Github.
 
 
-3. To make every projet inside /opt/dk running as a Systemd service, we must create a file /etc/systemd/system/dk@.service
+3. To make every project inside /opt/dk running as a Systemd service, we must create a file /etc/systemd/system/dk@.service
 
 ```bash
 [Unit]
@@ -94,26 +106,10 @@ After that, every directory inside /opt/dk/, become a service and can be run by 
 ## Run container app
 There is two way to run. One for developing and the other for production or testing
 
-For developing, you need to add domaine manualy in /etc/hosts and create local certificat and configure traefik with dev config. See bellow.
+For developing, you need to add domaine manualy in /etc/hosts and create local certificat and configure traefik with dev config ( traefik-dev.yml ).
 
-For testing or developing, certificat are auto generated with LetsEncrypt in the domaine point correctly to the server. It's our traefik default configuration.
+For production, certificat are auto generated with LetsEncrypt if the domaine point correctly to the server. It's our traefik default configuration ( traefik.yml )
 
-#### [FOR DEVELOP MODE ONLY] Add your user in dk & docker groups
-```bash
-sudo usermod -aG dk $USER # Will add your user in dk and docker groups
-sudo usermod -aG docker $USER
-```
-#### [FOR DEVELOP MODE ONLY] Create local SSL certificat for developing test with mkcert [download binary](https://github.com/FiloSottile/mkcert/releases)
-
-```bash
-sudo apt install libnss3-tools
-# Exec the mkcert binary
-mkcert -install
-
-# Add your local domaine name from /etc/hosts
-# '*.localhost' means all domaine with .localhost will use this certificat
-mkcert -key-file key.pem -cert-file cert.pem '*.localhost' '*.test' localhost 127.0.0.1
-```
 #### Run traefik container. Traefik is entry point for all container application. It must be run before all other container. It listens the port 80 and 443, so this ports must be free.
 
 ```bash
@@ -121,64 +117,129 @@ mkcert -key-file key.pem -cert-file cert.pem '*.localhost' '*.test' localhost 12
 sudo -u dk git clone https://github.com/avenirbiz/docker_traefik /opt/dk/traefik
 ```
 
-#### [FOR DEVELOP MODE] copy the generated key to /opt/dk/traefik/etc
-
-```bash
-# copy key.pem cert.pem in /opt/dk/traefiK/etc/
-sudo cp key.pem cert.pem /opt/dk/traefik/etc/
-```
-#### [FOR DEVELOP MODE ONLY] in traefik docker-compose /opt/dk/traefik/etc/docker-compose, comment prod conf and uncomment dev conf
-```yaml
-      #- "./etc/traefik.yml:/traefik.yml:ro"
-      - "./etc/traefik-dev.yml:/traefik.yml:ro" # Only for dev test
-
-```
-#### Configure traefik
-See in [github.com/avenirbiz/docker_traefik](https://github.com/avenirbiz/docker_traefik)
+More about traefik, see in [github.com/avenirbiz/docker_traefik](https://github.com/avenirbiz/docker_traefik) and how to configure Traefik.
 
 #### Start traefik container
+
 ```bash
 sudo systemctl start dk@traefik.service
 ```
-### Configure a backup directory
-Many docker-compose are configured to puts backups in /mnt/backups/. In developing, you can create the repo. In production, It can be a mounted NFS from storage backups.
 #### Run docker apps
 
-Example, we want to run absoins_lerocher.
+Example, we want to run a Odoo app.
 
 ```bash
-# Get the repo contains psono docker-compose
-sudo -u dk git clone https://github.com/avenirbiz/absoins__lerocher /opt/dk/absoins_lerocher
-# With odoo Docker, in this case, the name path of module become absoins_lerocher. This can create confusion with the path using when the module is developed, example for Odoo web.
-
-# See in absoins_lerocher/README.md how to configure absoins_lerocher with traefik.
-
-# After you can start absoins_lerocher
+# Get the repo contains odoo docker-compose
+sudo -u dk git clone https://github.com/avenirbiz/docker_odoo /opt/dk/avenirbiz
+# See in docker_odoo/README.md how to configure
+# After you can start avenirbiz
 # You must be sure that traefik service run before
-sudo systemclt start absoins_lerocher
-
+sudo systemctl start dk@avenirbiz
 # You can open in browser the domaine name you have configure in your .env file
-
 ```
 
 #### To see logs of running container
 ```bash
 sudo docker ps -a # to see all containers
-sudo docker logs -f container_name
+sudo docker logs -f container_name # If github.com/avenirbiz/docker_dashboard is configured, we can see logs in dashboard
 ```
 NB:
-The name of container is not the name of systemd service. It's possible to stop or restart a service with docker commands. The systemd service run a docker-compose file in /opt/dk/**
+The name of container is not necessary the name of systemd service. It's possible to stop or restart a service with docker commands. The systemd service run a docker-compose command in /opt/dk/**
+
+### Configure a backup directory
+Many docker-compose are configured to puts backups in /mnt/backups/ with the service github.com/futurice/docker-volume-backup . In developing, you can create the directory. In production, It can be a mounted NFS from storage backups.
 
 
-### How to migrate from odoo to odoo container
+## Develop Mode
+
+You must run traefik. So we can follow the method above until before run traefik.
+For certificat, we must generate manualy and change the config in docker-compose
+
+#### Add your user in dk & docker groups to run without docker without sudo
+```bash
+# Will add your user in dk and docker groups
+sudo usermod -aG dk $USER
+sudo usermod -aG docker $USER
+```
+#### Create local SSL certificat for developing test with mkcert [download binary](https://github.com/FiloSottile/mkcert/releases)
+
+```bash
+sudo apt install libnss3-tools
+# Exec the mkcert binary
+./mkcert -install
+# Add your local domaine name from /etc/hosts
+# '*.localhost' means all domaine with .localhost will use this certificat
+./mkcert -key-file key.pem -cert-file cert.pem '*.localhost' '*.test' localhost 127.0.0.1
+```
+#### copy the generated key to /opt/dk/traefik/etc/ssl
+
+```bash
+# copy key.pem cert.pem in /opt/dk/traefiK/etc/ssl
+sudo -u dk mkdir /opt/dk/traefik/etc/ssl
+sudo -u dk cp key.pem cert.pem /opt/dk/traefik/etc/ssl
+```
+#### in traefik docker-compose /opt/dk/traefik/docker-compose.yml, comment prod conf and uncomment dev conf
+```yaml
+      #- "./etc/traefik.yml:/traefik.yml:ro"
+      - "./etc/traefik-dev.yml:/traefik.yml:ro" # Only for dev test
+```
+and restart dk@traefik
+
+### Run container apps
+
+Now you can clone app from github everywhere in your system ( even inside your home). Just configure the .env and run docker-compose up to run the container app.
+
+N.B: Even in dev mode, the backup system works !
+
+
+## How to migrate from odoo to odoo container
+
+This is important to show how we can mount and copy file from container to system host and vice-versa. Even in server or local setup.
 
 ```bash
 # This example for avenirbiz from odoo13 enterprise to odoo14 community
+
+# Uncompress backup in home directory
 tar zxvf bzovhapp02_enterprise_source-2021-02-05_1626.tgz
-sudo -u dk git clone https://github.com/avenirbiz/avenirbiz_odoo /opt/dk/avenirbiz
+tar zxvf bzovhapp02_custom_source-2021-02-05_1625.tgz
+tar zxvf avenirbank-filestore-2021-02-05_1545.tgz
+gunzip avenirbank_com-2021-02-05_1612.sql.gz
 
-sudo -u dk cp -r enterprise /opt/dk/avenirbiz/
+# Clone an sample of docker_odoo
+# Note that docker_odoo is just a sample. We can have a repo with custom modules or entreprise modules to facilate deployment. In this case, we go with a fresh docker_odoo repo.
+sudo -u dk git clone https://github.com/avenirbiz/docker_odoo /opt/dk/avenirbiz
 
+# copy custom & entreprise module
+sudo -u dk cp -r enterprise custom community /opt/dk/avenirbiz/
+
+cd /opt/dk/avenirbiz
+# Configure the .env variable like addons_path, database name, admin_password and generate odoo.conf. Note that the .env and generate.py can be more complete with options later.
+
+# Install python-dotvenv and run generate.py
+python3 generate.py
+```
+
+```yaml
+
+# Mount the directory where the backups are (home in our case) in Odoo and Postgres by adding volumes sections in docker-compose where Odoo field and Postgres field service is define.
+services:
+      odoo...
+      volumes:
+            - "/home/ivisi/:/tmp/backup"
+      postgres...
+      volumes:
+            - "/home/ivisi/:/tmp/backup"
+```
+```bash
+# Get into the Odoo and Postgres container and exec restore commands
+# docker ps to see running container and get name
+docker ps
+# docker exec -ti TheContainerRunningName shell
+docker exec -ti avenirbiz_com_db bash # restore db like usualy with pg_dump... from /tmp/backup
+# Then exit and get into Odoo
+docker exec -ti avenirbiz_com bash # restore filestore like usualy with cp... from /tmp/backup to /var/lib/odoo/.local/share...
+
+# After that we can remove our volume fields we have added in docker-compose and rerun our service.
 ```
 
 
@@ -187,7 +248,7 @@ sudo -u dk cp -r enterprise /opt/dk/avenirbiz/
 
 Each server runs [github.com/avenirbiz/docker_traefik](github.com/avenirbiz/docker_traefik), [github.com/avenirbiz/docker_dashboard](github.com/avenirbiz/docker_dashboard) ( Grafana, Prometheus, Loki, Promtail, Alertmanager, Cadvisor and nodeexporter )
 ### Server absolutions01
-* Drone.io for CD/CI. Containers rerun with updated images every times we make a push in github.
+* Drone.io for CD/CI more info in [github.com/avenirbiz/docker_drone](github.com/avenirbiz/docker_drone) . Containers rerun with updated images every times we make a push in github.
 * Docker-registry, tool for saving image. Is a private repository for customs docker images.
 * makabo test
 * abeducat demo
