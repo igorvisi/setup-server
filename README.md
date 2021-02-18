@@ -28,10 +28,10 @@ Each project can contain:
 
 You can see more description in each repo in README.md .
 
-We use 3 setup : Dev mode, Test mode and Prod mod. But the test mode and prod mode are configured the same way
+We use 3 setup : Dev mode, Test mode and Prod mod. But the test mode and prod mode are configured the same way. But in Test mode: the dk user must have permissions to run systemctl service, must have a ssh key and Github access, so drone CD/CI can use this user to get update from Github and restart container with update.
 
 ## Prod and Test mode
-Can be setup in a local server or in a Cloud VPS...
+Can be setup in a local server ( Use Gogs and drone instead of Github ) or in a Cloud VPS...
 
 * Install and Update OS. Choose a last LTS version of Ubuntu server
 
@@ -110,7 +110,7 @@ For developing, you need to add domaine manualy in /etc/hosts and create local c
 
 For production, certificat are auto generated with LetsEncrypt if the domaine point correctly to the server. It's our traefik default configuration ( traefik.yml )
 
-#### Run traefik container. Traefik is entry point for all container application. It must be run before all other container. It listens the port 80 and 443, so this ports must be free.
+#### Run traefik container. Traefik is entry point for all container application. It must be run before all other container. It listens the port 80 and 443, so those ports must be free.
 
 ```bash
 # clone this repo from github and copy traefik directory to /opt/dk/
@@ -124,6 +124,9 @@ More about traefik, see in [github.com/avenirbiz/docker_traefik](https://github.
 ```bash
 sudo systemctl start dk@traefik.service
 ```
+
+### Ansible: we can use Ansible to setup automatically the environment for Prod and Test
+See script inside this repo
 #### Run docker apps
 
 Example, we want to run a Odoo app.
