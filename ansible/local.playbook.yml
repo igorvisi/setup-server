@@ -1,0 +1,174 @@
+---
+- name: Prepare Odoo environment for production in local
+  hosts: all
+  remote_user: sysadmin
+  vars:
+    ansible_python_interpreter: /bin/python3
+
+  tasks:
+
+    - name: Install required packages & basic packages
+      become: yes
+      apt:
+        name:
+          [
+            "apt-transport-https",
+            "ca-certificates",
+            "chkrootkit",
+            "curl",
+            "git",
+            "gnupg",
+            "htop",
+            "lynis",
+            "neofetch",
+            "neovim",
+            "python3-docker",
+            "python3-pip",
+            "rclone",
+            "rsync",
+            "rkhunter",
+            "ufw",
+            "vim",
+            "wireguard",
+          ]
+        update_cache: yes
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Uninstall old versions of docker may be present in the system
+      become: yes
+      apt:
+        name:
+          [
+            "containerd",
+            "docker",
+            "docker-compose",
+            "docker-engine",
+            "docker.io",
+            "runc",
+          ]
+        state: absent
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Add Docker GPG apt Key
+      become: yes
+
+      apt_key:
+       url: https://download.docker.com/linux/ubuntu/gpg
+       state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Add Docker Repository
+      become: yes
+      apt_repository:
+        # lsb_release -cs   to get distribution name. focal (20.04 TLS) in our case
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      become: yes
+
+      apt:
+        name:
+          [
+            "containerd.io",
+            "docker",
+            "docker-ce",
+            "docker-ce-cli",
+            "docker-compose",
+          ]
+        state: present
+        update_cache: yes
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Create user dk for running docker
+      become: yes
+      user:
+        name: dk
+        comment: Docker user
+        groups: docker
+        shell: /bin/bash
+        create_home: True
+        home: /opt/dk/
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Create systemd file
+      become: true
+      copy:
+        dest: /etc/systemd/system/dk@.service
+        content: |
+          [Unit]
+          Description=%i service with Docker-compose inside /opt/dk/i%
+          Requires=docker.service
+          After=docker.service
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=true
+          WorkingDirectory=/opt/dk/%i
+          ExectStart=/usr/docker-compose -f local.docker-compose.yml up -d
+          ExecStop=/usr/docker-compose -f local.docker-compose.yml stop
+          User=dk
+          Group=docker
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      become: true
+      command: systemctl daemon-reload
+
+    - name: Give dk user permission to run systemctl start/stop/restart/status dk@* , for just system services created above.
+      become: true
+      copy:
+        dest: /etc/sudoers.d/100-dk-runs-systemctl-container
+        content: |
+          # Give dk user permission to run systemctl start/stop/restart/status dk@*
+          dk ALL=(root) NOPASSWD: /usr/bin/systemctl start dk@* , /usr/bin/systemctl stop dk@* , /usr/bin/systemctl restart dk@* , /usr/bin/systemctl status dk@*
+
+    - name: Add SSH Keys from Github of employees to dk user for SFTP uploads ( Odoo modules )
+    # github.com/username.keys to get a key from Github
+
+      become: True
+      authorized_key:
+        user: dk
+        state: present
+        key: https://github.com/{{ item }}.keys
+      loop:
+        - igorvisi
+        - dattah
+        - adamo-git
+
+    - name: Add SSH Keys from Github of employees to sysadmin admin's tasks
+
+      become: True
+      authorized_key:
+        user: sysadmin
+        state: present
+        key: https://github.com/{{ item }}.keys
+      loop:
+        - adamo-git
+        - dattah
+        - divenal123
+        - igorvisi
+
+    - name: Pull images from docker
+      become: true
+      docker_image:
+        name: "{{ item }}"
+        source: pull
+      loop:
+        - odoo:13
+        - postgres:12
+        - adminer
+        #- odoo:14
+
+        # In case metrics is important
+        #- grafana/grafana:7.3.6
+        #- prom/prometheus:v2.23.0
+        #- grafana/loki:2.0.0
+        #- grafana/promtail:master
+        #- prom/alertmanager:v0.21.0
+        #- gcr.io/cadvisor/cadvisor:v0.38.6
+        #- prom/node-exporter:v1.0.1
+
