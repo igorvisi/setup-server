@@ -92,25 +92,7 @@
 
     - name: Create systemd file
       become: true
-      copy:
-        dest: /etc/systemd/system/dk@.service
-        content: |
-          [Unit]
-          Description=%i service with Docker-compose inside /opt/dk/i%
-          Requires=docker.service
-          After=docker.service
-
-          [Service]
-          Type=oneshot
-          RemainAfterExit=true
-          WorkingDirectory=/opt/dk/%i
-          ExectStart=/usr/docker-compose up -d
-          ExecStop=/usr/docker-compose stop
-          User=dk
-          Group=docker
-
-          [Install]
-          WantedBy=multi-user.target
+      template: src=j2-docker-dk.service.j2 dest=/etc/systemd/system/dk@.service
 
     - name: Reload systemd daemon
       become: true
@@ -118,8 +100,5 @@
 
     - name: Give dk user permission to run systemctl start/stop/restart/status dk@* , for just system services created above.
       become: true
-      copy:
-        dest: /etc/sudoers.d/100-dk-runs-systemctl-container
-        content: |
-          # Give dk user permission to run systemctl start/stop/restart/status dk@*
-          dk ALL=(root) NOPASSWD: /usr/bin/systemctl start dk@* , /usr/bin/systemctl stop dk@* , /usr/bin/systemctl restart dk@* , /usr/bin/systemctl status dk@*
+      template: src=j2-sudoers.j2 dest=/etc/sudoers.d/100-dk-runs-systemctl-container
+      validate: 'visudo -cf %s'

@@ -1,0 +1,68 @@
+version: '3.4'
+
+volumes:
+  web_data:
+    name: ${ODOO_CONTAINER}
+  db_data:
+    name: ${ODOO_CONTAINER}_db
+
+services:
+
+  odoo:
+    container_name: ${ODOO_CONTAINER}
+    image: odoo:14
+    volumes:
+      - web_data:/var/lib/odoo/
+      - "./modules:/mnt/extra-addons:rw"
+      - "./odoo.conf:/etc/odoo/odoo.conf:rw"
+
+    environment:
+    - USER=${POSTGRES_USER}
+    - PASSWORD=${POSTGRES_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK}"
+      - "traefik.http.routers.${ODOO_CONTAINER}.entrypoints=websecure"
+      - "traefik.http.routers.${ODOO_CONTAINER}.tls=true"
+
+      # Support of www domaine with and redirect to without www
+      - "traefik.http.routers.${ODOO_CONTAINER}.rule=Host(`${DOMAINE_NAME}`) || Host(`www.${DOMAINE_NAME}`)"
+      - "traefik.http.middlewares.${ODOO_CONTAINER}-redirectregex.redirectregex.regex=^https://www.${DOMAINE_NAME}/(.*)"
+      - "traefik.http.middlewares.${ODOO_CONTAINER}-redirectregex.redirectregex.replacement=https://${DOMAINE_NAME}/$${1}"
+      - "traefik.http.routers.${ODOO_CONTAINER}.middlewares=${ODOO_CONTAINER}-redirectregex"
+
+
+
+  db:
+    container_name: ${ODOO_CONTAINER}_db
+    image: postgres:12
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_DB=postgres
+
+
+  adminer:
+    image: adminer
+    container_name: ${ODOO_CONTAINER}_adminer
+    expose:
+      - 8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.entrypoints=websecure"
+      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.tls=true"
+      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.rule=Host(`${DOMAINE_NAME}`) && (PathPrefix(`/bd`))"
+      - "traefik.http.middlewares.${ODOO_CONTAINER}_adminer-auth.basicauth.usersfile=/etc/traefik/passwd/user.password"
+      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.middlewares=${ODOO_CONTAINER}_adminer-auth"
+    environment:
+      - ADMINER_DEFAULT_DB_DRIVER=pgsql
+      - ADMINER_DEFAULT_DB_HOST=${ODOO_CONTAINER}_db
+      - ADMINER_DESIGN=pappu687
+
+networks:
+  default:
+    external:
+      name: $DEFAULT_NETWORK

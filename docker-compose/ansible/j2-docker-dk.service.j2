@@ -1,0 +1,15 @@
+[Unit]
+Description=%i service with Docker-compose inside /opt/dk/i%
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+WorkingDirectory=/opt/dk/%i
+ExectStart=/usr/docker-compose up -d
+ExecStop=/usr/docker-compose stop
+User=dk
+Group=docker
+[Install]
+WantedBy=multi-user.target
