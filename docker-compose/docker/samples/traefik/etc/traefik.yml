@@ -1,0 +1,40 @@
+## STATIC CONFIGURATION
+log:
+  level: INFO
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: :443
+
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  # TLS info
+  file:
+    filename: '/etc/traefik/ssl/prod.yml'
+    watch: true
+
+certificatesResolvers:
+  letsEncrypt:
+    acme:
+      email: sysadmin@avenirbiz.com
+      storage: /etc/traefik/acme/acme.json
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+      # For testing before because LetsEncrypt limits rate of certificat generation. Verify in browser if the certificat is LetsEncrypt and then switch to prod
+      #caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      httpChallenge:
+        # used during the challenge
+        entryPoint: web
