@@ -24,7 +24,7 @@
             "neovim",
             "python3-docker",
             "python3-pip",
-            "rclone",
+            "restic",
             "rsync",
             "rkhunter",
             "ufw",
