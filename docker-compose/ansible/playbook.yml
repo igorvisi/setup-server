@@ -92,13 +92,15 @@
 
     - name: Create systemd file
       become: true
-      template: src=templates/docker-dk.service.j2 dest=/etc/systemd/system/dk@.service
+      template: src=./templates/docker-dk.service.j2 dest=/etc/systemd/system/dk@.service
 
     - name: Reload systemd daemon
       become: true
       command: systemctl daemon-reload
 
-    - name: Give dk user permission to run systemctl start/stop/restart/status dk@* , for just system services created above.
+    - name: Give dk user permission to run systemctl on dk@ service
       become: true
-      template: src=templates/sudoers.j2 dest=/etc/sudoers.d/100-dk-runs-systemctl-container
-      validate: 'visudo -cf %s'
+      template:
+        src: ./templates/sudoers.j2
+        dest: /etc/sudoers.d/100-dk-runs-systemctl-container
+        validate: /usr/sbin/visudo -cf %s
