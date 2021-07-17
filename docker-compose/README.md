@@ -1,14 +1,13 @@
 # Docker
-Docker est un logiciel libre permettant de lancer des applications dans des conteneurs logiciels3.
+Docker is open source software for running applications in software containers.
 
-Selon la firme de recherche sur l'industrie 451 Research, « Docker est un outil qui peut empaqueter une application et ses dépendances dans un conteneur isolé, qui pourra être exécuté sur n'importe quel serveur ».
+According to industry research firm 451 Research, "Docker is a tool that can package an application and its dependencies into an isolated container, which can be run on any server."
 
 
-# Comment notre système fonctionne actuellement ?
+# How does our system currently work?
 
-Les logiciels à installé se trouvent sur le script ansible cloud.playbook.yml se trouvant dans ansible. Le script créera aussi un utilisateur dk qui n'aura pas les privilèges sudo mais appartenant au groupe docker qui lui donne le possibilité de manipuler docker.
+The software to be installed is on the ansible script cloud.playbook.yml found in ansible. The script will also create a user dk who will not have sudo privileges but will belong to the docker group which gives him the ability to manipulate docker.
 
-Tous les projets se trouvent sur /opt/dk/ qui appartient à l'utilisateur dk.
+All projects are located on /opt/dk/ which belongs to the user dk.
 
-Chaque projet contiendra un ensemble de fichiers. Le dossier docker/samples contient les exemples de projets.
-
+Each project will contain a set of files. The folder docker/samples contains the sample projects.
