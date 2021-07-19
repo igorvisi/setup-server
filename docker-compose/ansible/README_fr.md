@@ -7,7 +7,7 @@ Ansible est une plate-forme logicielle libre pour la configuration et la gestion
 ## Structure
 
 Nous avons sur ce projet:
-* **server.playbook.yml**
+* **playbook.yml**
 Ce playbook a pour rôle:
 - Installer les logiciels essentiels pour un serveur
 - Installer docker, docker-compose et ses dépendances.
@@ -17,6 +17,12 @@ Ce playbook a pour rôle:
 * **templates**
 Ce dossier contient les templates jinja qui seront remplacés.
 - docker-dk.service.j2 pour créer un service dk
+- rkhunter.conf.local.j2 configuration de rkhunter.
+- rkhunter.service.j2 création d'un service systemd
+- rkhunter.timer.j2 création d'une tâche répétitive
 - sudoers.j2 pour donner à l'utilisateur dk les droits de stopper,démarrer ou redémarrer le service dk créé
+
+* **hosts**
+Ce fichier contient les différentes hosts qu'il faut configurer.
 
 Plus de documentation, voir le site d' Ansible.
