@@ -13,7 +13,6 @@
           [
             "apt-transport-https",
             "ca-certificates",
-            "chkrootkit",
             "curl",
             "git",
             "gnupg",
@@ -39,8 +38,6 @@
         name:
           [
             "containerd",
-            "docker",
-            "docker-compose",
             "docker-engine",
             "docker.io",
             "runc",
