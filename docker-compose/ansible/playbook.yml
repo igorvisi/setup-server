@@ -106,3 +106,22 @@
         src: ./templates/sudoers.j2
         dest: /etc/sudoers.d/100-dk-runs-systemctl-container
         validate: /usr/sbin/visudo -cf %s
+
+    - name: Add rkhunter conf, a rootkit hunter.
+      become: true
+      copy:
+        src: ./templates/rkhunter.conf.local.j2
+        dest: /etc/rkhunter.conf.local
+
+    - name: Copy rkhunter service file
+      copy:
+        src: ./templates/rkhunter.service.j2
+        dest: /etc/systemd/system/rkhunter.service
+
+    - name: Copy rkhunter service timer to run every day in 05h00 AM
+      copy:
+        src: ./templates/rkhunter.timer.j2
+        dest: /etc/systemd/system/rkhunter.timer
+
+    - name: Reload services and start the rkhunter service
+      command: systemctl daemon-reload && systemctl start --enable rkhunter.timer
