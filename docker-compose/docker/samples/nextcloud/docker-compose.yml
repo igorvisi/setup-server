@@ -1,0 +1,56 @@
+version: '3.4'
+
+volumes:
+  web_data:
+    name: ${CONTAINER_NAME}
+  conf_data:
+    name: ${CONTAINER_NAME}
+  db_data:
+    name: ${CONTAINER_NAME}_db
+
+
+services:
+  nextcloud:
+    image: nextcloud:21.0.0
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    volumes:
+      - web_data:/var/www/html/data
+      - conf_data:/var/www/html/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK}"
+      - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
+      - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=letsEncrypt"
+
+      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAINE_NAME}`)"
+      # Force https security with http header
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslRedirect=true"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslForceHost=true"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslHost=${DOMAINE_NAME}"
+      - "traefik.http.routers.${CONTAINER_NAME}.middlewares=${CONTAINER_NAME}-secheader"
+
+    environment:
+            #- OVERWRITEHOST=${DOMAINE_NAME}
+    - OVERWRITEPROTOCOL=https
+
+  db:
+    container_name: ${CONTAINER_NAME}_db
+    image: mysql:5.7
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+    - MYSQL_DATABASE=${DB_DATABASE}
+    - MYSQL_USER=${DB_USERNAME}
+    - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}_root
+    - MYSQL_PASSWORD=${DB_PASSWORD}
+
+networks:
+  default:
+    external:
+      name: $DEFAULT_NETWORK
