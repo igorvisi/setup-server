@@ -1,0 +1,33 @@
+version: '3.4'
+
+volumes:
+  data:
+    name: ${CONTAINER_NAME}
+
+services:
+
+  app:
+    image: vaultwarden/server:1.22.1
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    volumes:
+      - data:/data
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${DEFAULT_NETWORK}"
+      - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
+      - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=letsEncrypt"
+      - "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port"
+      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`secure.bizanova.com`) || Host(`secure.avenirbiz.com`)"
+
+    environment:
+      - DOMAIN=https://secure.avenirbiz.com
+      - ADMIN_TOKEN=$ADMIN_TOKEN
+      - WEBSOCKET_ENABLED=true # Required to use websockets
+      - SIGNUPS_ALLOWED=false   # set to false to disable signups
+networks:
+  default:
+    external:
+      name: $DEFAULT_NETWORK
