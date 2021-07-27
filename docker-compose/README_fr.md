@@ -18,6 +18,9 @@ Tous les projets se placent sur /opt/dk/ qui appartient à l'utilisateur dk ( ut
 
 Grâce au service créé **dk@.service**, tous les projets dans /opt/dk/ peuvent s'excuter avec docker-compose.
 
+Toute cette configuration va se faire automatiquement grâce à notre rôle Ansible.
+### Comment lancer un nouveau projet ?
+
 Example:
 
 ```bash
