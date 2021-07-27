@@ -116,6 +116,9 @@
         src: ./templates/rkhunter.service.j2
         dest: /etc/systemd/system/rkhunter.service
 
+    - name: Install python-dotenv module
+      command: python3 -m pip install python-dotenv
+
     - name: Copy rkhunter service timer to run every day in 05h00 AM
       become: true
       copy:
@@ -128,4 +131,4 @@
 
     - name: Start the rkhunter service
       become: true
-      command: systemctl enable --now rkhunter.timer
+      command: systemctl daemon-reload && systemctl enable --now rkhunter.timer
