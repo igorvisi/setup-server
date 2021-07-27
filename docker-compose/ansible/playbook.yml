@@ -124,4 +124,4 @@
 
     - name: Reload services and start the rkhunter service
       become: true
-      command: systemctl daemon-reload && systemctl start --enable rkhunter.timer
+      command: systemctl daemon-reload && systemctl enable --now rkhunter.timer
