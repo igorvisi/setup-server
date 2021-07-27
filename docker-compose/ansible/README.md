@@ -32,5 +32,6 @@ More documentation, see the Ansible website.
 Edit hosts file and run playbook:
 
 ```bash
-ansible-playbook -i hosts playbook
+ansible-playbook -i hosts playbook -K
+# put your password in BECOME password to have sudo privileges
 ```
