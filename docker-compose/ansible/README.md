@@ -27,7 +27,7 @@ This file contains the different IP adresses and users of hosts that must be con
 
 More documentation, see the Ansible website.
 
-## How to run
+## How to run ?
 
 Edit hosts file and run playbook:
 
