@@ -11,11 +11,11 @@ On this project we have:
 This playbook has the following role:
 - Install the essential software for a server
 - Install docker, docker-compose and its dependencies.
-- Create a **dk** user and assign it to a **docker** group to manipulate docker with unprivileged rights.
+- Create a **dk** user with his home in /opt/dk and assign it to a **docker** group to manipulate docker with unprivileged rights.
 - Create a docker service that will run the docker-compose files contained on each folder in /opt/dk/
 
 ### **templates**
-This folder contains the jinja templates that will be replaced.
+This folder contains the jinja templates that will be go to different directories in server .
 - docker-dk.service.j2 to create a dk service
 - rkhunter.conf.local.j2 configuration of rkhunter.
 - rkhunter.service.j2 creation of a systemd service
@@ -23,6 +23,14 @@ This folder contains the jinja templates that will be replaced.
 - sudoers.j2 to give the dk user the rights to stop, start or restart the created dk service
 
 ### **hosts**
-This file contains the different hosts that must be configured.
+This file contains the different IP adresses and users of hosts that must be configured.
 
 More documentation, see the Ansible website.
+
+## How to run
+
+Edit hosts file and run playbook:
+
+```bash
+ansible-playbook -i hosts playbook
+```
