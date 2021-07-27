@@ -111,14 +111,17 @@
         dest: /etc/rkhunter.conf.local
 
     - name: Copy rkhunter service file
+      become: true
       copy:
         src: ./templates/rkhunter.service.j2
         dest: /etc/systemd/system/rkhunter.service
 
     - name: Copy rkhunter service timer to run every day in 05h00 AM
+      become: true
       copy:
         src: ./templates/rkhunter.timer.j2
         dest: /etc/systemd/system/rkhunter.timer
 
     - name: Reload services and start the rkhunter service
+      become: true
       command: systemctl daemon-reload && systemctl start --enable rkhunter.timer
