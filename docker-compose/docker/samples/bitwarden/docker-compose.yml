@@ -7,7 +7,7 @@ volumes:
 services:
 
   app:
-    image: vaultwarden/server:1.22.1
+    image: vaultwarden/sha256:fe2a236b792fb2304ef50f86f1c25076ac5b2748e1b776fce260ad12ad29188d
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     volumes:
