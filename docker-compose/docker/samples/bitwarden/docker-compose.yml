@@ -7,7 +7,7 @@ volumes:
 services:
 
   app:
-    image: vaultwarden/server:1.22.1
+    image: vaultwarden/sha256:fe2a236b792fb2304ef50f86f1c25076ac5b2748e1b776fce260ad12ad29188d
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     volumes:
@@ -20,13 +20,13 @@ services:
       - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
       - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=letsEncrypt"
       - "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port"
-      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`secure.bizanova.com`) || Host(`secure.avenirbiz.com`)"
+      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAINE_NAME}`)"
 
     environment:
-      - DOMAIN=https://secure.avenirbiz.com
-      - ADMIN_TOKEN=$ADMIN_TOKEN
-      - WEBSOCKET_ENABLED=true # Required to use websockets
-      - SIGNUPS_ALLOWED=false   # set to false to disable signups
+      - DOMAIN=https://${DOMAINE_NAME}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - WEBSOCKET_ENABLED=${WEBSOCKET_ENABLED} # Required to use websockets
+      - SIGNUPS_ALLOWED=${SIGNUPS_ALLOWED}   # set to false to disable signups
 networks:
   default:
     external:
