@@ -2,14 +2,14 @@ version: '3.4'
 
 volumes:
   web_data:
-    name: ${ODOO_CONTAINER}
+    name: ${CONTAINER_NAME}
   db_data:
-    name: ${ODOO_CONTAINER}_db
+    name: ${CONTAINER_NAME}_db
 
 services:
 
   odoo:
-    container_name: ${ODOO_CONTAINER}
+    container_name: ${CONTAINER_NAME}
     image: odoo:14
     volumes:
       - web_data:/var/lib/odoo/
@@ -22,19 +22,19 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${DEFAULT_NETWORK}"
-      - "traefik.http.routers.${ODOO_CONTAINER}.entrypoints=websecure"
-      - "traefik.http.routers.${ODOO_CONTAINER}.tls=true"
+      - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
 
       # Support of www domaine with and redirect to without www
-      - "traefik.http.routers.${ODOO_CONTAINER}.rule=Host(`${DOMAINE_NAME}`) || Host(`www.${DOMAINE_NAME}`)"
-      - "traefik.http.middlewares.${ODOO_CONTAINER}-redirectregex.redirectregex.regex=^https://www.${DOMAINE_NAME}/(.*)"
-      - "traefik.http.middlewares.${ODOO_CONTAINER}-redirectregex.redirectregex.replacement=https://${DOMAINE_NAME}/$${1}"
-      - "traefik.http.routers.${ODOO_CONTAINER}.middlewares=${ODOO_CONTAINER}-redirectregex"
+      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAINE_NAME}`) || Host(`www.${DOMAINE_NAME}`)"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-redirectregex.redirectregex.regex=^https://www.${DOMAINE_NAME}/(.*)"
+      - "traefik.http.middlewares.${CONTAINER_NAME}-redirectregex.redirectregex.replacement=https://${DOMAINE_NAME}/$${1}"
+      - "traefik.http.routers.${CONTAINER_NAME}.middlewares=${CONTAINER_NAME}-redirectregex"
 
 
 
   db:
-    container_name: ${ODOO_CONTAINER}_db
+    container_name: ${CONTAINER_NAME}_db
     image: postgres:12
     restart: always
     volumes:
@@ -47,19 +47,19 @@ services:
 
   adminer:
     image: adminer
-    container_name: ${ODOO_CONTAINER}_adminer
+    container_name: ${CONTAINER_NAME}_adminer
     expose:
       - 8080
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.entrypoints=websecure"
-      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.tls=true"
-      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.rule=Host(`${DOMAINE_NAME}`) && (PathPrefix(`/bd`))"
-      - "traefik.http.middlewares.${ODOO_CONTAINER}_adminer-auth.basicauth.usersfile=/etc/traefik/passwd/user.password"
-      - "traefik.http.routers.${ODOO_CONTAINER}_adminer.middlewares=${ODOO_CONTAINER}_adminer-auth"
+      - "traefik.http.routers.${CONTAINER_NAME}_adminer.entrypoints=websecure"
+      - "traefik.http.routers.${CONTAINER_NAME}_adminer.tls=true"
+      - "traefik.http.routers.${CONTAINER_NAME}_adminer.rule=Host(`${DOMAINE_NAME}`) && (PathPrefix(`/bd`))"
+      - "traefik.http.middlewares.${CONTAINER_NAME}_adminer-auth.basicauth.usersfile=/etc/traefik/passwd/user.password"
+      - "traefik.http.routers.${CONTAINER_NAME}_adminer.middlewares=${CONTAINER_NAME}_adminer-auth"
     environment:
       - ADMINER_DEFAULT_DB_DRIVER=pgsql
-      - ADMINER_DEFAULT_DB_HOST=${ODOO_CONTAINER}_db
+      - ADMINER_DEFAULT_DB_HOST=${CONTAINER_NAME}_db
       - ADMINER_DESIGN=pappu687
 
 networks:
