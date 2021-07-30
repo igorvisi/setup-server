@@ -19,7 +19,6 @@ services:
       - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
       - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=letsEncrypt"
-      - "traefik.http.services.${CONTAINER_NAME}.loadbalancer.server.port"
       - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAINE_NAME}`)"
 
     environment:
