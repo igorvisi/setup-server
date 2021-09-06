@@ -17,7 +17,7 @@ def write_file(filepath,content):
 
 # Get variables from .env
 odoo_admin_pwd = os.getenv("ODOO_ADMIN_PWD")
-db_host = os.getenv("ODOO_CONTAINER") + "_db"
+db_host = os.getenv("CONTAINER_NAME") + "_db"
 db_user = os.getenv("POSTGRES_USER")
 db_password = os.getenv("POSTGRES_PASSWORD")
 addons_path = os.getenv("ADDONS_PATH")
