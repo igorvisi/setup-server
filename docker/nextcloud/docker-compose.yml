@@ -17,22 +17,6 @@ services:
     volumes:
       - web_data:/var/www/html/data
       - conf_data:/var/www/html/config
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${DEFAULT_NETWORK}"
-      - "traefik.http.routers.${CONTAINER_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${CONTAINER_NAME}.tls=true"
-      - "traefik.http.routers.${CONTAINER_NAME}.tls.certresolver=letsEncrypt"
-
-      - "traefik.http.routers.${CONTAINER_NAME}.rule=Host(`${DOMAINE_NAME}`)"
-      # Force https security with http header
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.forceSTSHeader=true"
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.stsIncludeSubdomains=true"
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.stsSeconds=31536000"
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslRedirect=true"
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslForceHost=true"
-      - "traefik.http.middlewares.${CONTAINER_NAME}-secheader.headers.sslHost=${DOMAINE_NAME}"
-      - "traefik.http.routers.${CONTAINER_NAME}.middlewares=${CONTAINER_NAME}-secheader"
 
     environment:
             #- OVERWRITEHOST=${DOMAINE_NAME}
