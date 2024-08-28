@@ -1,0 +1,71 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+  tasks:
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install packages to allow apt to use a repository over HTTPS
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker's official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/{{ ansible_lsb.id | lower }}/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_lsb.id | lower }} {{ ansible_lsb.codename }} stable
+        state: present
+
+    - name: Update the apt package index again
+      apt:
+        update_cache: yes
+
+    - name: Install Docker packages
+      apt:
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Ensure Docker service is started and enabled
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Create user dk for running Docker
+      user:
+        name: dk
+        comment: Docker user
+        groups: docker
+        shell: /bin/bash
+        create_home: true
+        home: /opt/dk/
+      when: ansible_lsb.id in ['Ubuntu', 'Debian']
+
+    - name: Create systemd file for dk
+      template:
+        src: ./templates/docker-dk.service.j2
+        dest: /etc/systemd/system/dk@.service
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Give dk user permission to run systemctl on dk@ service
+      copy:
+        src: ./templates/sudoers.j2
+        dest: /etc/sudoers.d/100-dk-runs-systemctl-container
+        validate: /usr/sbin/visudo -cf %s

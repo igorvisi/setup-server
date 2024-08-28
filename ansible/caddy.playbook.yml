@@ -1,0 +1,62 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Ensure the system is either Ubuntu or Debian
+      assert:
+        that:
+          - "'Debian' in ansible_distribution or 'Ubuntu' in ansible_distribution"
+        fail_msg: "This playbook only supports Ubuntu or Debian."
+
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      apt:
+        name:
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+        state: present
+
+    - name: Add Caddy repository GPG key
+      apt_key:
+        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+        state: present
+
+    - name: Add Caddy APT repository
+      apt_repository:
+        repo: deb [trusted=yes] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+        state: present
+
+    - name: Update the apt package index again
+      apt:
+        update_cache: yes
+
+    - name: Install Caddy
+      apt:
+        name: caddy
+        state: present
+
+    - name: Create Caddyfile configuration
+      template:
+        src: templates/Caddyfile.j2
+        dest: /etc/caddy/Caddyfile
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload Caddy
+
+    - name: Ensure Caddy is started and enabled
+      systemd:
+        name: caddy
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Reload Caddy
+      systemd:
+        name: caddy
+        state: reloaded

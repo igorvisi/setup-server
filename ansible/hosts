@@ -1,2 +1,2 @@
-#other1.example.com     ansible_connection=ssh        ansible_user=remoteuser
-127.0.0.1 ansible_user=master
+#other1.example.com ansible_connection=ssh ansible_user=remoteuser
+127.0.0.1 ansible_user=master ansible_connection=local

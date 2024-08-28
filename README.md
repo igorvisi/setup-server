@@ -1,48 +1,35 @@
-# Docker
+# Ansible
 
-Voir en français dans le fichier README_fr.md .
+Ansible is a free software platform for computer configuration and management. It combines multi-node software deployment, ad-hoc task execution, and configuration management. It manages individual nodes through SSH and does not require any additional software to be installed on them. Modules communicate via standard output in JSON notation and can be written in any programming language. The system uses YAML to express reusable system descriptions, called playbooks.
 
-Docker is an open source software for running applications in software containers.
+## Structure
 
-According to industry research firm 451 Research, « Docker is a tool that can package an application and its dependencies into an isolated container that can be run on any server ».
+On this project we have many playbook :
 
-## Docker-compose
+### **docker.playbook.yml**
+This playbook has the following role:
+- Install docker, docker-compose and its dependencies.
+- Create a **dk** user with his home in /opt/dk and assign it to a **docker** group to manipulate docker with unprivileged rights.
+- Create a docker service that will run the docker-compose files contained on each folder in /opt/dk/
 
-Docker Compose is a tool for running multi-container applications on Docker defined using the Compose file format. A Compose file is used to define how the container(s) that make up your application are configured. Once you have a Compose file, you can create and start your application with a single command: docker-compose up.
+### **templates**
+This folder contains the jinja templates that will be go to different directories in server .
+- docker-dk.service.j2 to create a dk service
+- rkhunter.conf.local.j2 configuration of rkhunter.
+- rkhunter.service.j2 creation of a systemd service
+- rkhunter.timer.j2 creation of a repetitive task
+- sudoers.j2 to give the dk user the rights to stop, start or restart the created dk service
 
-## How does our system currently work?
+### **hosts**
+This file contains the different IP adresses and users of hosts that must be configured.
 
-We use Ansible to setup the server, installing and configuring the pre-requisites like docker, docker-compose, rkhunter... See the Ansible configuration in the **docker-compose/ansible** folder.
+More documentation, see the Ansible website.
 
-All projects are placed on /opt/dk/ which belongs to the user dk (user without administrator privileges)
+## How to run ?
 
-Thanks to the created service **dk@.service**, all projects in /opt/dk/ can be executed with docker-compose.
-
-All this setup will be make automatically with Ansible role
-
-### How can you deploy a new project ?
-
-If the server is already setup, you can find a samples of project with docker-compose in folder docker-compose/docker/samples and copy to /opt/dk/ . The project directory and files must be owned by dk user.
-Example:
-
-Example:
+Edit hosts file and run playbook:
 
 ```bash
-sudo su dk
-git clone https://github.com/avenirbiz/servers
-cp -r servers/docker-compose/docker/samples/odoo /opt/dk/testprojet
-
-# Each project has his own configuration before running. You can find conf in servers/docker-compose/docker/samples/projecttype/README.md
-
-# After that, you can launch app.
-
-# The two commands below are the same
-sudo systemctl start dk@zando.service
-
-sudo -u dk docker-compose -f /opt/dk/zando/docker-compose.yml up
-# The two commands below are the same too
-sudo systemctl start dk@avenirbiz.service
-
-sudo -u dk docker-compose -f /opt/dk/avenirbiz/docker-compose.yml up
+ansible-playbook -i hosts playbook -K
+# put your password in BECOME password to have sudo privileges
 ```
-The folder **docker-compose/docker/samples** contains the examples of how the deployed projects are structured.

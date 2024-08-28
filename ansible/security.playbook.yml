@@ -1,0 +1,113 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    wazuh_manager_domain: "wazuh.example.com"  # Remplacez par votre domaine Wazuh
+    wazuh_agent_name: "{{ inventory_hostname }}"
+
+  tasks:
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages to the latest version
+      apt:
+        name: "*"
+        state: latest
+
+    - name: Install security tools (rkhunter, lynis)
+      apt:
+        name:
+          - rkhunter
+          - lynis
+        state: present
+
+    - name: Configure rkhunter to run daily at midnight
+      cron:
+        name: "Daily rkhunter scan"
+        minute: "0"
+        hour: "0"
+        job: "/usr/bin/rkhunter --cronjob --report-warnings-only --appendlog"
+
+    - name: Run initial rkhunter scan
+      command: "/usr/bin/rkhunter --checkall"
+      ignore_errors: yes
+
+    - name: Configure Lynis to run weekly at midnight
+      cron:
+        name: "Weekly Lynis audit"
+        minute: "0"
+        hour: "0"
+        weekday: "1"  # Lundi
+        job: "/usr/bin/lynis audit system --cronjob --quiet"
+
+    - name: Run initial Lynis audit
+      command: "lynis audit system --quick"
+      register: lynis_output
+      ignore_errors: yes
+
+    - name: Display Lynis audit report
+      debug:
+        msg: "{{ lynis_output.stdout }}"
+
+    - name: Download and install Wazuh agent
+      apt:
+        deb: https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.4.0-1_amd64.deb
+        state: present
+
+    - name: Configure Wazuh agent
+      template:
+        src: wazuh-agent.conf.j2
+        dest: /var/ossec/etc/ossec.conf
+
+    - name: Set Wazuh manager domain in agent config
+      lineinfile:
+        path: /var/ossec/etc/ossec.conf
+        regexp: '(<address>).*(</address>)'
+        line: "<address>{{ wazuh_manager_domain }}</address>"
+
+    - name: Set Wazuh agent name
+      lineinfile:
+        path: /var/ossec/etc/ossec.conf
+        regexp: '(<name>).*(</name>)'
+        line: "<name>{{ wazuh_agent_name }}</name>"
+
+    - name: Enable and start Wazuh agent
+      systemd:
+        name: wazuh-agent
+        enabled: yes
+        state: started
+
+    - name: Set up automatic updates for security patches
+      apt:
+        name: unattended-upgrades
+        state: present
+
+    - name: Configure automatic updates
+      lineinfile:
+        path: /etc/apt/apt.conf.d/50unattended-upgrades
+        regexp: '^\/\/\s*"origin=Debian,codename=\${distro_codename}-updates";'
+        line: '"origin=Debian,codename=${distro_codename}-updates";'
+      notify:
+        - restart unattended-upgrades
+
+    - name: Ensure UFW is installed
+      apt:
+        name: ufw
+        state: present
+
+    - name: Configure UFW to allow SSH and block everything else
+      ufw:
+        rule: allow
+        name: OpenSSH
+      notify:
+        - enable ufw
+
+  handlers:
+    - name: restart unattended-upgrades
+      systemd:
+        name: unattended-upgrades
+        state: restarted
+
+    - name: enable ufw
+      command: ufw --force enable
