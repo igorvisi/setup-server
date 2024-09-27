@@ -41,7 +41,7 @@
 
     - name: Create Caddyfile configuration
       template:
-        src: templates/Caddyfile.j2
+        src: templates/caddyfile.j2
         dest: /etc/caddy/Caddyfile
         owner: root
         group: root
