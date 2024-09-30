@@ -5,7 +5,7 @@ from datetime import datetime
 
 # Variables générales
 BASE_DIR = "/opt/dk"
-LOG_FILE = "/var/log/restic-backup.log"
+LOG_FILE = "/var/log/backup-visetup.log"
 DEFAULT_KEEP_DAYS = 30  # Nombre de jours par défaut pour conserver les sauvegardes
 
 # Informations de connexion en dur
@@ -22,6 +22,14 @@ REPOSITORIES = [
         "provider": "storagebox.your-provider.com",
         "path": "/backups/{folder}",
         "keep_days": 15  # Personnalisation du nombre de jours
+    },
+    {
+        "name": "MegaNZ",
+        "type": "rclone",
+        "enabled": True,
+        "remote": "mega_backup",  # Le nom configuré dans rclone
+        "path": "/backups/{folder}",
+        "keep_days": 30  # Nombre de jours pour conserver les sauvegardes
     },
     {
         "name": "ResticServer",
@@ -180,6 +188,14 @@ def backup_all_folders():
                         repository_url = f"sftp://{repo['user']}:{repo['password']}@{repo['provider']}{repo['path'].format(folder=folder)}"
                         backup_folder(folder_path, repository_url, repo_name, repo_type, repo)
 
+                    elif repo_type == "rclone":
+                        # Vérifier les informations nécessaires
+                        if not repo["remote"]:
+                            log_message(f"Skipping Rclone repository '{repo_name}' due to missing configuration.")
+                            continue
+                        repository_url = f"rclone:{repo['remote']}:{repo['path'].format(folder=folder)}"
+                        backup_folder(folder_path, repository_url, repo_name, repo_type, repo)
+
                     elif repo_type == "rest":
                         # Vérifier les informations nécessaires
                         if not (repo["user"] and repo["password"] and repo["server_ip"]):
@@ -231,4 +247,3 @@ if __name__ == "__main__":
     log_message("Backup process started.")
     backup_all_folders()
     log_message("Backup process completed.")
-

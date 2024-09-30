@@ -1,7 +1,11 @@
 # Exemple de configuration Caddyfile
 
-example.com {
+igorvisi.com {
     reverse_proxy backend:8080
+     tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
 }
+
 
 # Ajoutez d'autres blocs selon vos besoins

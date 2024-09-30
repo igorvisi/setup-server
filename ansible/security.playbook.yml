@@ -2,7 +2,7 @@
 - hosts: all
   become: yes
   vars:
-    wazuh_manager_domain: "wazuh.example.com"  # Remplacez par votre domaine Wazuh
+    wazuh_manager_domain: "wazuh.example.com"
     wazuh_agent_name: "{{ inventory_hostname }}"
 
   tasks:

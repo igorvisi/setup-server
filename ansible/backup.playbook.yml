@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Créer le fichier de log dans /var/log/backup
+      file:
+        path: /var/log/backup-visetup.log
+        state: touch
+        owner: dk
+        group: dk
+        mode: '0644'
+
+    - name: Copy backup script
+      copy:
+        src: bin/backup-visetup.py
+        dest: /usr/local/bin/backup-visetup.py
+        owner: dk
+        group: dk
+        mode: '0755'
+
+    - name: Add backup script in cron task every 30 minutes
+      cron:
+        name: "script backup every 30 minutes"
+        user: dk
+        minute: "*/30"
+        job: "/usr/local/bin/backup-visetup.py"
+        state: present
