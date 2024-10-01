@@ -9,7 +9,7 @@ LOG_FILE = "/var/log/backup-visetup.log"
 DEFAULT_KEEP_DAYS = 30  # Nombre de jours par défaut pour conserver les sauvegardes
 
 # Informations de connexion en dur
-RESTIC_PASSWORD = "pwd"  # Mot de passe Restic pour le chiffrement
+RESTIC_PASSWORD = "pwdFort@1"  # Mot de passe Restic pour le chiffrement
 
 # Liste des dépôts de sauvegarde
 REPOSITORIES = [
@@ -150,7 +150,7 @@ def backup_folder(folder, repository_url, repo_name, repo_type, repo_config):
     init_restic_repository(repository_url, repo_name)
 
     # Exécuter la sauvegarde
-    backup_command = f"restic backup {folder} --verbose"
+    backup_command = f"restic backup {folder} --verbose --exclude '{BASE_DIR}/.*' "
     run_restic_command(backup_command)
     log_message(f"Backup of '{folder}' to repository '{repo_name}' completed successfully.")
 
