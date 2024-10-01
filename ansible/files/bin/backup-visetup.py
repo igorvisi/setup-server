@@ -150,7 +150,7 @@ def backup_folder(folder, repository_url, repo_name, repo_type, repo_config):
     init_restic_repository(repository_url, repo_name)
 
     # Exécuter la sauvegarde
-    backup_command = f"restic backup {folder} --verbose --exclude '{BASE_DIR}/.*' "
+    backup_command = f"restic backup {folder} --verbose"
     run_restic_command(backup_command)
     log_message(f"Backup of '{folder}' to repository '{repo_name}' completed successfully.")
 
@@ -169,7 +169,7 @@ def backup_all_folders():
         folder_path = os.path.join(BASE_DIR, folder)
 
         # Vérifier si c'est un répertoire
-        if os.path.isdir(folder_path):
+        if os.path.isdir(folder_path) and not folder.startswith('.'):
             log_message(f"Processing folder: {folder_path}")
             # Boucler sur chaque dépôt
             for repo in REPOSITORIES:
