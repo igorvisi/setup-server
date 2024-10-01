@@ -58,14 +58,14 @@
 
     - name: Create systemd file for dk
       template:
-        src: templates/docker-dk.service.j2
+        src: docker-dk.service.j2
         dest: /etc/systemd/system/dk@.service
 
     - name: Reload systemd daemon
       command: systemctl daemon-reload
 
     - name: Give dk user permission to run systemctl on dk@ service
-      copy:
-        src: templates/sudoers.j2
+      template:
+        src: sudoers.j2
         dest: /etc/sudoers.d/100-dk-runs-systemctl-container
         validate: /usr/sbin/visudo -cf %s
