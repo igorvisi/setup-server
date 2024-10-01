@@ -3,6 +3,17 @@
   become: yes
 
   tasks:
+    - name: Installer Restic
+      apt:
+        name: restic
+        state: present
+      become: yes
+
+    - name: Installer Rclone
+      apt:
+        name: rclone
+        state: present
+      become: yes
 
     - name: Créer le fichier de log dans /var/log/backup
       file:
